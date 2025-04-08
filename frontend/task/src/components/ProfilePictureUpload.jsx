@@ -5,6 +5,7 @@ import { uploadProfilePicture } from "../redux/slices/authSlice";
 const ProfilePictureUpload = () => {
   const dispatch = useDispatch();
   const auth = useSelector((state) => state.auth);
+ 
   
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -55,17 +56,17 @@ const ProfilePictureUpload = () => {
 
     const formData = new FormData();
     formData.append("profilePicture", selectedFile);
-    formData.append("userId", userId);
+    formData.append("userId", userId||user._id||user.id);
     setUploading(true);
     setErrorMessage(null);
 
     try {
       // Dispatch the uploadProfilePicture action with formData
-      const resultAction = await dispatch(uploadProfilePicture(formData));
+      const resultAction = await dispatch(uploadProfilePicture(formData,userId)).unwrap()
 
       if (uploadProfilePicture.fulfilled.match(resultAction)) {
         console.log("Upload successful:", resultAction.payload);
-        
+  
         // Clear the file input
         setSelectedFile(null);
         setPreview(null);
@@ -82,7 +83,7 @@ const ProfilePictureUpload = () => {
   };
 
   // Determine which image to show
-  const profileImage = preview || user?.profilePicture;
+  const profileImage =  auth?.user?.user?.profilePicture || preview
 
   return (
     <div className="flex flex-col items-center">
@@ -125,3 +126,4 @@ const ProfilePictureUpload = () => {
 };
 
 export default ProfilePictureUpload;
+

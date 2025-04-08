@@ -25,7 +25,7 @@ export const registerUserApi = async (userData) => {
 };
 
 // Upload Profile Picture API call
-export const uploadProfilePictureApi = async (userId, formData) => {
+export const uploadProfilePictureApi = async ( formData) => {
   try {
     const token = getAuthToken();
     
@@ -35,26 +35,45 @@ export const uploadProfilePictureApi = async (userId, formData) => {
     
 
     //  userId is a string before using it in the URL
-    const stringUserId = typeof userId === 'object' ? 
-      (userId.id || userId.toString()) : userId.toString();
+   // const stringUserId = typeof userId === 'object' ? 
+      //(userId.id || userId.toString()) : userId.toString();
 
+
+    //const response = await axios.post(
+      //`${API_URL}/${stringUserId}/upload`,
+      //formData,
+      //{
+       // headers: {
+        //  Authorization: `Bearer ${token}`,
+         // "Content-Type": "multipart/form-data",
+        //},
+     // }
+   // );
+     
+    
+ 
 
     const response = await axios.post(
-      `${API_URL}/${stringUserId}/upload`,
+      `${API_URL}/upload-profile-picture`, 
       formData,
       {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
+          //"Content-Type": "multipart/form-data",
         },
       }
     );
-
+ console.log(response.data);
+ 
     return response.data;
+
   } catch (error) {
+    console.log("error while uploading profile pic:",error);
+    
     throw error.response?.data || "Upload failed";
   }
 };
+
 
 // Get User Profile API call
 export const getUserProfileApi = async () => {

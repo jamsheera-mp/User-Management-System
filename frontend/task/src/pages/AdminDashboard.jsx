@@ -91,16 +91,17 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleEdituser = (userId) =>{
+ 
+  const handleEdituser = (userId) => {
     dispatch(fetchUserDetail(userId))
-    navigate(`/admin/users/${userId}`)
+    navigate(`/admin/users/edit/${userId}`)
   }
 
   
   // Handle viewing user profile
   const handleViewProfile = (userId) => {
     dispatch(fetchUserDetail(userId));
-    navigate(`/admin/users/${userId}`); // Add navigation after fetching profile
+    navigate(`/admin/users/${userId}`); 
   };
   
   // Check if user is admin

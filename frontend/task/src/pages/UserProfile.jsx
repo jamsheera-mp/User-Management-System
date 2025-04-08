@@ -8,6 +8,7 @@ const UserProfile = () => {
   const auth = useSelector((state) => state.auth);
   const { isLoading } = useSelector((state) => state.auth);
 
+
   // Fetch user profile when component mounts
   useEffect(() => {
     if (auth.isAuthenticated) {
@@ -15,9 +16,9 @@ const UserProfile = () => {
     }
   }, [dispatch, auth.isAuthenticated]);
 
-  // Debug logging (can be removed in production)
+  // Debug logging 
   useEffect(() => {
-    console.log("Auth user from Redux:", auth.user);
+    console.log("Auth user from Redux:", auth.user.user);
   }, [auth.user]);
 
   const profileData = auth.user;
@@ -40,6 +41,7 @@ const UserProfile = () => {
         <p className="text-gray-600 text-sm mb-2">
           <strong>Email:</strong> {profileData?.email}
         </p>
+       
 
         {/* Profile Picture Upload Component */}
         <ProfilePictureUpload />

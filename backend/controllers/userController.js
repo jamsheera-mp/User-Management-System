@@ -1,8 +1,15 @@
 const User = require("../models/User");
 
-
+/*
 const uploadProfilePicture = async (req, res) => {
   try {
+
+    console.log("Request body:", req.body);
+    console.log("Request file:", req.file);
+    
+    if (!req.file) {
+      return res.status(400).json({ message: 'No image uploaded' });
+    }
 
     const  {userId}  = req.body; 
 
@@ -35,5 +42,60 @@ const uploadProfilePicture = async (req, res) => {
     res.status(500).json({ message: 'Server error' ,error});
   }
 };
+*/
 
-module.exports = { uploadProfilePicture };
+// controllers/userController.js
+
+
+const uploadProfilePicture = async (req, res) => {
+  try {
+    console.log("Request received:", { body: req.body, file: req.file, userId: req.body.userId  });
+    
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    if (!req.file?.path) {
+      return res.status(500).json({ message: "File upload failed to Cloudinary" });
+    }
+    
+    const { userId } = req.body;
+    console.log("Using userId:", userId);
+    
+    if (!userId) {
+      return res.status(400).json({ message: 'User ID is required' });
+    }
+
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Update with Cloudinary URL
+    user.profilePicture = req.file.path;
+    await user.save();
+
+    // Return success response with image URL and user data
+    return res.status(200).json({
+      success: true,
+      imageUrl: req.file.path,
+      user: {
+        ...user.toObject(),
+        password: undefined
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error uploading profile picture:', error);
+    return res.status(500).json({ 
+      message: 'Server error while uploading profile picture',
+      error: error.message 
+    });
+  }
+};
+
+module.exports = {
+  uploadProfilePicture
+};
+

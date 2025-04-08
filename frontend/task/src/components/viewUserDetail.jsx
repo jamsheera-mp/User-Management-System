@@ -49,7 +49,7 @@ const ViewUserDetails = () => {
   }, [dispatch, userId]);
   
   const handleEditUser = () => {
-    navigate(`/admin/users/${userId}/edit`);
+    navigate(`/admin/users/edit/${userId}`);
   };
   
   const handleBackToDashboard = () => {

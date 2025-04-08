@@ -27,14 +27,14 @@ const userSchema  = new mongoose.Schema({
         type:Boolean,
         default:false
     },
-    isDeleted:{
-        type:Boolean,
-        default:false
-    },
-    profilePicture:{
-        type:String,
-        default:''
-    }
+    ////isDeleted:{
+        //type:Boolean,
+       // default:false
+    //},
+    profilePicture: {
+        type: String,
+        default: 'https://res.cloudinary.com/dnk2llnda/image/upload/v1744026438/default-avatar-icon-of-social-media-user-vector_qre51i.jpg'
+      }
 },{
     timestamps:true
 })

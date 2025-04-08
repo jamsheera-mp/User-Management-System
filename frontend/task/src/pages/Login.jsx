@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { loginUser } from "../redux/slices/authSlice";
-import { useNavigate } from "react-router-dom";
+import { Link,useNavigate } from "react-router-dom";
 
 
 const Login = () => {
@@ -63,6 +63,9 @@ const Login = () => {
             {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
+        <p className="text-gray-500 text-sm text-center mt-4">
+          Don't have an account? <Link to="/register" className="text-blue-500 hover:underline">Register</Link>
+        </p>
       </div>
     </div>
   );
