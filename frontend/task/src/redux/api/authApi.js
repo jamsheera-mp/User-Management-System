@@ -95,3 +95,23 @@ export const getUserProfileApi = async () => {
     throw error.response?.data || "Failed to fetch profile";
   }
 };
+export const updateUserProfileApi = async (userData) => {
+  try {
+    const token = getAuthToken();
+    if (!token) throw "Not authenticated";
+
+    const response = await axios.put(
+      `${API_URL}/profile`,
+      userData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    
+    return response.data;
+  } catch (error) {
+    throw error.response?.data || "Failed to update profile";
+  }
+};

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loginUserApi, registerUserApi, uploadProfilePictureApi, getUserProfileApi } from "../api/authApi";
+import { loginUserApi, registerUserApi, uploadProfilePictureApi, getUserProfileApi, updateUserProfileApi } from "../api/authApi";
 import { storeUserData, getUserFromStorage, updateProfilePictureInStorage, removeUserFromStorage } from "../utils/localStorageUtils";
 
 // Async thunk for login
@@ -116,6 +116,29 @@ export const getUserProfile = createAsyncThunk(
       return userData;
     } catch (error) {
       return rejectWithValue(error);
+    }
+  }
+);
+// Async thunk for updating user profile
+export const updateUserProfile = createAsyncThunk(
+  "auth/updateUserProfile",
+  async (userData, { rejectWithValue }) => {
+    try {
+      const response = await updateUserProfileApi(userData);
+      
+      // Update user data in localStorage
+      if (response && response.user) {
+        // Use your existing storage utility
+        storeUserData({
+          user: response.user
+        });
+        return response.user;
+      } else {
+        return rejectWithValue("Invalid response format");
+      }
+    } catch (error) {
+      console.error("Profile update error:", error);
+      return rejectWithValue(error?.toString() || "Update failed");
     }
   }
 );
@@ -242,6 +265,28 @@ const authSlice = createSlice({
       state.user = action.payload;
       state.isAuthenticated = !!action.payload;
     });
+
+
+    // User profile update cases
+builder.addCase(updateUserProfile.pending, (state) => {
+  state.isLoading = true;
+  state.error = null;
+});
+builder.addCase(updateUserProfile.fulfilled, (state, action) => {
+  state.isLoading = false;
+  // Update user data in the state, preserving any fields not returned by the API
+  state.user = { 
+    ...state.user, 
+    ...action.payload,
+    // Ensure profilePicture is preserved
+    profilePicture: action.payload.profilePicture || state.user?.profilePicture
+  };
+  state.error = null;
+});
+builder.addCase(updateUserProfile.rejected, (state, action) => {
+  state.isLoading = false;
+  state.error = action.payload;
+});
   },
 });
 

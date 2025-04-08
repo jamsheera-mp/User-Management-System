@@ -122,6 +122,42 @@ const getProfile = async (req,res)=>{
  }
 }
 
+const updateProfile = async (req,res) =>{
+    try {
+        const { name, email } = req.body;
+        
+        // Check if email is already taken by another user
+        if (email !== req.user.email) {
+          const existingUser = await User.findOne({ email });
+          if (existingUser) {
+            return res.status(400).json({ message: "Email already in use" });
+          }
+        }
+        
+        // Update user in database
+        const updatedUser = await User.findByIdAndUpdate(
+          req.user.id,
+          { 
+            name, 
+            email 
+          },
+          { new: true }
+        ).select('-password');
+        
+        if (!updatedUser) {
+          return res.status(404).json({ message: "User not found" });
+        }
+        
+        res.json({ 
+          message: "Profile updated successfully", 
+          user: updatedUser 
+        });
+        
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        res.status(500).json({ message: "Server error" });
+      }
+}
 
 
 
@@ -131,5 +167,6 @@ module.exports = {
     registerUser,
     loginUser,
     getProfile,
+    updateProfile
    
 }
