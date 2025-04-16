@@ -121,7 +121,7 @@ console.log("Component received profile:", currentProfile);
             />
           </div>
           
-          <div className="mb-4">
+          {/*<div className="mb-4">
             <label className="flex items-center">
               <input
                 type="checkbox"
@@ -132,7 +132,7 @@ console.log("Component received profile:", currentProfile);
               />
               <span className="text-gray-700 text-sm font-bold" style={{display:'none'}}>Admin Privileges</span>
             </label>
-          </div>
+          </div>*/}
           
           <div className="flex items-center justify-between">
             <button

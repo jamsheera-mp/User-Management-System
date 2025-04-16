@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { logoutUser } from '../redux/slices/authSlice'; 
+import { logout } from '../redux/slices/authSlice'; 
 
 const Navbar = () => {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
@@ -11,7 +11,8 @@ const Navbar = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const handleLogout = () => {
-    dispatch(logoutUser());
+    dispatch(logout());
+    setIsDropdownOpen(false)
     navigate('/login');
   };
 
@@ -27,13 +28,14 @@ const Navbar = () => {
               <div className="ml-10 flex items-baseline space-x-4">
                 {isAuthenticated && (
                   <>
+                  {!user?.isAdmin && (
                     <Link 
                       to="/profile" 
                       className="text-gray-300 hover:bg-gray-700 hover:text-white px-3 py-2 rounded-md text-sm font-medium"
                     >
                       Profile
                     </Link>
-                    
+                    )}
                     {user?.isAdmin && (
                       <Link 
                         to="/admin/dashboard" 
@@ -75,6 +77,7 @@ const Navbar = () => {
                     <div 
                       className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none"
                     >
+                      {!user?.isAdmin && (
                       <Link
                         to="/profile"
                         className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -82,7 +85,7 @@ const Navbar = () => {
                       >
                         My Profile
                       </Link>
-                      
+                      )}
                       {user?.isAdmin && (
                         <Link
                           to="/admin/dashboard"

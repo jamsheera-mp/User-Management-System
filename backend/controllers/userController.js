@@ -59,15 +59,15 @@ const uploadProfilePicture = async (req, res) => {
       return res.status(500).json({ message: "File upload failed to Cloudinary" });
     }
     
-    const { userId } = req.body;
-    console.log("Using userId:", userId);
+    //const { userId } = req.body;
+    //console.log("Using userId:", userId);
     
-    if (!userId) {
-      return res.status(400).json({ message: 'User ID is required' });
-    }
+    //if (!userId) {
+     // return res.status(400).json({ message: 'User ID is required' });
+    //}
 
-    const user = await User.findById(userId);
-    
+    //const user = await User.findById(userId);
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }

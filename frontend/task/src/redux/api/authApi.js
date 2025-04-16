@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { getAuthToken } from '../utils/tokenUtils';
 
 // Base API URL
 const API_URL = "http://localhost:5000/api/users";
@@ -13,6 +12,16 @@ export const loginUserApi = async (userData) => {
     throw error.response?.data || "Login Failed";
   }
 };
+//refresh token API call
+export const refreshTokenApi = async (refreshToken) => {
+  try {
+    const response = await axios.post(`${API_URL}/refresh-token`, { refreshToken });
+  return response.data;
+  } catch (error) {
+    throw error.response?.data || "Login Failed";
+  }
+  
+};
 
 // Registration API call
 export const registerUserApi = async (userData) => {
@@ -25,7 +34,7 @@ export const registerUserApi = async (userData) => {
 };
 
 // Upload Profile Picture API call
-export const uploadProfilePictureApi = async ( formData) => {
+/*export const uploadProfilePictureApi = async ( formData) => {
   try {
     const token = getAuthToken();
     
@@ -33,26 +42,6 @@ export const uploadProfilePictureApi = async ( formData) => {
       throw "Authentication token is missing";
     }
     
-
-    //  userId is a string before using it in the URL
-   // const stringUserId = typeof userId === 'object' ? 
-      //(userId.id || userId.toString()) : userId.toString();
-
-
-    //const response = await axios.post(
-      //`${API_URL}/${stringUserId}/upload`,
-      //formData,
-      //{
-       // headers: {
-        //  Authorization: `Bearer ${token}`,
-         // "Content-Type": "multipart/form-data",
-        //},
-     // }
-   // );
-     
-    
- 
-
     const response = await axios.post(
       `${API_URL}/upload-profile-picture`, 
       formData,
@@ -72,13 +61,13 @@ export const uploadProfilePictureApi = async ( formData) => {
     
     throw error.response?.data || "Upload failed";
   }
-};
+};*/
 
 
 // Get User Profile API call
-export const getUserProfileApi = async () => {
+export const getUserProfileApi = async (token) => {
   try {
-    const token = getAuthToken();
+    
     if (!token) throw "Not authenticated";
 
     const response = await axios.get(
@@ -95,9 +84,11 @@ export const getUserProfileApi = async () => {
     throw error.response?.data || "Failed to fetch profile";
   }
 };
-export const updateUserProfileApi = async (userData) => {
+/*export const updateUserProfileApi = async (userData) => {
   try {
     const token = getAuthToken();
+    console.log("token received:",token);
+    
     if (!token) throw "Not authenticated";
 
     const response = await axios.put(
@@ -114,4 +105,4 @@ export const updateUserProfileApi = async (userData) => {
   } catch (error) {
     throw error.response?.data || "Failed to update profile";
   }
-};
+};*/

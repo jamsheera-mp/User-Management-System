@@ -19,11 +19,11 @@ const ViewUserDetails = () => {
       // Check if isAdmin property exists directly on user
       if (user.isAdmin === true) return true;
       
-      // Try to get data from localStorage if needed
-      const userData = localStorage.getItem("user");
-      if (userData) {
+      
+      
+      if (user) {
         try {
-          const parsed = JSON.parse(userData);
+          const parsed = JSON.parse(user);
           if (parsed.isAdmin === true) return true;
           if (parsed.user && parsed.user.isAdmin === true) return true;
         } catch (error) {

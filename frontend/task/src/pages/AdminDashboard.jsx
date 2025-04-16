@@ -6,76 +6,56 @@ import {
   searchUsers,
   fetchUserDetail
 } from '../redux/slices/userSlice';
-import { Link, useNavigate } from 'react-router-dom';
+import { getUserProfile } from '../redux/slices/authSlice'; 
+import {  useNavigate } from 'react-router-dom';
+import {increment,decrement} from '../redux/slices/counterSlice'
 
 const AdminDashboard = () => {
   const dispatch = useDispatch();
-  const navigate = useNavigate()
-  const { users, isLoading, error } = useSelector(state => state.users); 
-  const { user } = useSelector(state => state.auth);
-  
+  const navigate = useNavigate();
+  const { users, isLoading, error } = useSelector(state => state.users);
+  const { user, isAuthenticated, isLoading: authLoading ,token} = useSelector(state => state.auth);
   const [searchQuery, setSearchQuery] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
-  
 
-  
-  // Fetch all users when component mounts
+  const {count} = useSelector((state)=>state.count)
+
+  // Fetch user profile on mount if not authenticated
   useEffect(() => {
-    // First verify that the user exists and has admin privileges
-  const checkAdminAccess = () => {
-    if (!user) return false;
-    
-    // Check if isAdmin property exists directly on user
-    if (typeof user.isAdmin === 'boolean') return user.isAdmin;
-    
-    // Try to get data from localStorage if needed
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      const parsed = JSON.parse(userData);
-      if (parsed.user && parsed.user.isAdmin) return true;
+    if (!isAuthenticated && !user && token) {
+      dispatch(getUserProfile())
+        .unwrap()
+        .catch(() => {
+          navigate('/login')// Redirect if token invalid
+        })
     }
-    
-    return false;
-  };
-  
-  if (checkAdminAccess()) {
-    dispatch(fetchUsers());
-  }
-  }, [dispatch, user]);
+  }, [dispatch, isAuthenticated, user, token, navigate]);
 
-  const checkAdminAccess = () => {
-    if (!user) return false;
-    
-    // Check if isAdmin property exists directly on user
-    if (user.isAdmin === true) return true;
-    
-    // Try to get data from localStorage if needed
-    const userData = localStorage.getItem("user");
-    if (userData) {
-      try {
-        const parsed = JSON.parse(userData);
-        // Check different possible paths
-        if (parsed.isAdmin === true) return true;
-        if (parsed.user && parsed.user.isAdmin === true) return true;
-      } catch (error) {
-        console.error("Error parsing user data:", error);
-      }
-    }
-    
-    return false;
-  };
+ 
   
+  // Check if user is admin based on Redux state
+  const checkAdminAccess = () => {
+    if (!user || !isAuthenticated) return false;
+    return user.isAdmin === true;
+  };
+
+   // Fetch users once admin is confirmed
+  useEffect(() => {
+    if (isAuthenticated && checkAdminAccess()) {
+      dispatch(fetchUsers());
+    }
+  }, [dispatch, isAuthenticated,user]);
+
   // Handle search
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       dispatch(searchUsers(searchQuery));
     } else {
-      // If search is cleared, fetch all users again
       dispatch(fetchUsers());
     }
   };
-  
+
   // Handle user deletion
   const handleDeleteUser = async (userId) => {
     if (window.confirm('Are you sure you want to delete this user?')) {
@@ -91,21 +71,23 @@ const AdminDashboard = () => {
     }
   };
 
- 
-  const handleEdituser = (userId) => {
-    dispatch(fetchUserDetail(userId))
-    navigate(`/admin/users/edit/${userId}`)
-  }
+  const handleEditUser = (userId) => {
+    dispatch(fetchUserDetail(userId));
+    navigate(`/admin/users/edit/${userId}`);
+  };
 
-  
-  // Handle viewing user profile
   const handleViewProfile = (userId) => {
     dispatch(fetchUserDetail(userId));
-    navigate(`/admin/users/${userId}`); 
+    navigate(`/admin/users/${userId}`);
   };
-  
-  // Check if user is admin
-  if (user && !checkAdminAccess()) {
+
+  // Loading state while fetching auth
+  if (authLoading) {
+    return <div className="container mx-auto p-4">Loading authentication...</div>;
+  }
+
+  // Check admin access
+  if (!isAuthenticated || !checkAdminAccess()) {
     return (
       <div className="container mx-auto p-4">
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
@@ -114,7 +96,7 @@ const AdminDashboard = () => {
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
@@ -146,7 +128,7 @@ const AdminDashboard = () => {
               type="button"
               onClick={() => {
                 setSearchQuery('');
-                dispatch(fetchUsers()); 
+                dispatch(fetchUsers());
               }}
               className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
             >
@@ -155,14 +137,18 @@ const AdminDashboard = () => {
           )}
         </form>
       </div>
-      
-      
+ <p>Total number of users:{users.length}</p>
+
+ <h1>Count:{count}</h1>
+      <button onClick={()=>dispatch(increment())}>Increment</button>
+      <button onClick={()=>dispatch(decrement())}>Decrement</button> 
+     
       
       {/* Users Table */}
       <div className="bg-white shadow-md rounded-lg overflow-hidden">
         {isLoading ? (
           <div className="p-4 text-center">Loading users...</div>
-        ) : users && users.length > 0 ? ( // Added null check and changed usersList to users
+        ) : users && users.length > 0 ? (
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -172,14 +158,13 @@ const AdminDashboard = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Email
                 </th>
-               
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {users.map((userData) => ( 
+              {users.map((userData) => (
                 <tr key={userData._id}>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -211,7 +196,6 @@ const AdminDashboard = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm text-gray-900">{userData.email}</div>
                   </td>
-                  
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <button
                       onClick={() => handleViewProfile(userData._id)}
@@ -220,14 +204,14 @@ const AdminDashboard = () => {
                       View
                     </button>
                     <button
-                     onClick={()=>handleEdituser(userData._id)}
+                      onClick={() => handleEditUser(userData._id)}
                       className="text-yellow-600 hover:text-yellow-900 mr-3"
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDeleteUser(userData._id)}
-                      disabled={isDeleting || userData._id === user?._id} 
+                      disabled={isDeleting || userData._id === user?._id}
                       className={`${
                         userData._id === user?._id
                           ? "text-gray-400 cursor-not-allowed"

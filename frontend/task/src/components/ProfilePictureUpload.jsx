@@ -5,14 +5,14 @@ import { uploadProfilePicture } from "../redux/slices/authSlice";
 const ProfilePictureUpload = () => {
   const dispatch = useDispatch();
   const auth = useSelector((state) => state.auth);
- 
+  const { user,isLoading ,error} = useSelector((state) => state.auth);
   
   const [selectedFile, setSelectedFile] = useState(null);
   const [preview, setPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [errorMessage, setErrorMessage] = useState(null);
 
-  const user = auth.user;
+  //const user = auth.user;
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -40,29 +40,29 @@ const ProfilePictureUpload = () => {
       return;
     }
 
-    let userId;
-    if (user?._id) {
-      userId = typeof user._id === 'object' ? user._id.id || user._id.toString() : user._id;
-    } else if (user?.id) {
-      userId = typeof user.id === 'object' ? user.id.id || user.id.toString() : user.id;
-    }
-    if (!userId) {
-      setErrorMessage("User ID not found. Please log in again.");
-      console.error("Missing user ID. Current user state:", user);
-      return;
-    }
+    //let userId;
+    //if (user?._id) {
+      //userId = typeof user._id === 'object' ? user._id.id || user._id.toString() : user._id;
+    //} else if (user?.id) {
+      //userId = typeof user.id === 'object' ? user.id.id || user.id.toString() : user.id;
+   // }
+    //if (!userId) {
+      //setErrorMessage("User ID not found. Please log in again.");
+      //console.error("Missing user ID. Current user state:", user);
+      //return;
+    //}
 
-    console.log("Using userId:", userId); 
+   // console.log("Using userId:", userId); 
 
     const formData = new FormData();
     formData.append("profilePicture", selectedFile);
-    formData.append("userId", userId||user._id||user.id);
+   // formData.append("userId", userId||user._id||user.id);
     setUploading(true);
     setErrorMessage(null);
 
     try {
       // Dispatch the uploadProfilePicture action with formData
-      const resultAction = await dispatch(uploadProfilePicture(formData,userId)).unwrap()
+      const resultAction = await dispatch(uploadProfilePicture(formData)).unwrap()
 
       if (uploadProfilePicture.fulfilled.match(resultAction)) {
         console.log("Upload successful:", resultAction.payload);
@@ -75,7 +75,7 @@ const ProfilePictureUpload = () => {
         console.error("Upload failed:", resultAction);
       }
     } catch (error) {
-      setErrorMessage("An unexpected error occurred");
+      setErrorMessage(error?.message||"An unexpected error occurred");
       console.error("Error uploading file:", error);
     } finally {
       setUploading(false);
@@ -83,7 +83,7 @@ const ProfilePictureUpload = () => {
   };
 
   // Determine which image to show
-  const profileImage =  auth?.user?.user?.profilePicture || preview
+  const profileImage =  auth?.user?.profilePicture || preview
 
   return (
     <div className="flex flex-col items-center">

@@ -7,7 +7,7 @@ import EditUserProfile from "../components/EditUserProfile";
 const UserProfile = () => {
   const dispatch = useDispatch();
   const auth = useSelector((state) => state.auth);
-  const { isLoading } = useSelector((state) => state.auth);
+  const { user,isLoading ,error} = useSelector((state) => state.auth);
   const [isEditing,setIsEditing] = useState(false)
 
 
@@ -20,7 +20,7 @@ const UserProfile = () => {
 
   // Debug logging 
   useEffect(() => {
-    console.log("Auth user from Redux:", auth.user.user);
+    console.log("Auth user from Redux:", auth.user);
   }, [auth.user]);
 
   const profileData = auth.user;

@@ -1,69 +1,141 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { 
-  fetchUsersApi, 
-  updateUserApi, 
-  deleteUserApi, 
-  searchUsersApi, 
-  fetchUserDetailApi 
-} from '../api/userApi';
+import axios from 'axios'
+// Base API URL for admin endpoints
+const ADMIN_API_URL = "http://localhost:5000/api/admin/users";
+
 
 // Fetch all users
 export const fetchUsers = createAsyncThunk(
-  'users/fetchUsers',
-  async (_, { rejectWithValue }) => {
+  "users/fetchUsers",
+  async (_, { getState, rejectWithValue }) => {
     try {
-      return await fetchUsersApi();
+      const { auth } = getState();
+      const token = auth.accessToken;
+      console.log("Fetching users with token:", token); // Debug
+
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await axios.get(ADMIN_API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Fetch users response:", response.data); // Debug
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error);
+      console.error("Fetch users error:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch users");
     }
   }
 );
 
 // Update a user
 export const updateUser = createAsyncThunk(
-  'users/updateUser',
-  async ({ userId, updatedData }, { rejectWithValue }) => {
+  "users/updateUser",
+  async ({ userId, updatedData }, { getState, rejectWithValue }) => {
     try {
-      return await updateUserApi(userId, updatedData);
+      const { auth } = getState();
+      const token = auth.accessToken;
+      console.log("Updating user with token:", token); // Debug
+
+      if (!userId) throw new Error("User Id missing");
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await axios.put(`${ADMIN_API_URL}/${userId}`, updatedData, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Update user response:", response.data); // Debug
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error);
+      console.error("Update user error:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      return rejectWithValue(error.response?.data?.message || error.message || "User update failed");
     }
   }
 );
 
 // Delete a user
 export const deleteUser = createAsyncThunk(
-  'users/deleteUser',
-  async (userId, { rejectWithValue }) => {
+  "users/deleteUser",
+  async (userId, { getState, rejectWithValue }) => {
     try {
-      await deleteUserApi(userId);
+      const { auth } = getState();
+      const token = auth.accessToken;
+      console.log("Deleting user with token:", token); // Debug
+
+      if (!token) throw new Error("Not authenticated");
+
+      await axios.delete(`${ADMIN_API_URL}/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Delete user success for ID:", userId); // Debug
       return userId;
     } catch (error) {
-      return rejectWithValue(error);
+      console.error("Delete user error:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      return rejectWithValue(error.response?.data?.message || error.message || "User deletion failed");
     }
   }
 );
 
 // Search users
 export const searchUsers = createAsyncThunk(
-  'users/searchUsers',
-  async (query, { rejectWithValue }) => {
+  "users/searchUsers",
+  async (query, { getState, rejectWithValue }) => {
     try {
-      return await searchUsersApi(query);
+      const { auth } = getState();
+      const token = auth.accessToken;
+      console.log("Searching users with token:", token); // Debug
+
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await axios.get(`${ADMIN_API_URL}/search?query=${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Search users response:", response.data); // Debug
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error);
+      console.error("Search users error:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      return rejectWithValue(error.response?.data?.message || error.message || "Search failed");
     }
   }
 );
 
-// Get user detail
+/// Get single user detail
 export const fetchUserDetail = createAsyncThunk(
-  'users/fetchUserDetail',
-  async (userId, { rejectWithValue }) => {
+  "users/fetchUserDetail",
+  async (userId, { getState, rejectWithValue }) => {
     try {
-      return await fetchUserDetailApi(userId);
+      const { auth } = getState();
+      const token = auth.accessToken;
+      console.log("Fetching user detail with token:", token); // Debug
+
+      if (!token) throw new Error("Not authenticated");
+
+      const response = await axios.get(`${ADMIN_API_URL}/${userId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Fetch user detail response:", response.data); // Debug
+      return response.data;
     } catch (error) {
-      return rejectWithValue(error);
+      console.error("Fetch user detail error:", {
+        message: error.message,
+        status: error.response?.status,
+        data: error.response?.data,
+      });
+      return rejectWithValue(error.response?.data || "Failed to fetch user details");
     }
   }
 );

@@ -10,6 +10,7 @@ const EditUserProfile = ({ setIsEditing }) => {
   const userData = auth.user;
   
   const [formData, setFormData] = useState({
+   
     name: userData?.name || "",
     email: userData?.email || "",
   });
@@ -30,7 +31,8 @@ const EditUserProfile = ({ setIsEditing }) => {
     setError(null);
     
     try {
-      
+       console.log("submitting form data",formData);
+       
       const resultAction = await dispatch(updateUserProfile(formData)).unwrap();
       console.log('user data updated: ',resultAction);
       
@@ -39,8 +41,9 @@ const EditUserProfile = ({ setIsEditing }) => {
         setIsEditing(false);
       }, 1500);
     } catch (err) {
-      setError(err || "Failed to update profile");
-      console.error("Error updating profile:", err);
+      
+      console.error("Error updating profile:", err.message|| err.response?.data?.message || err.toString());
+      setError(err.message|| err.response?.data?.message || err.toString()|| "Failed to update profile");
     } finally {
       setIsSubmitting(false);
     }

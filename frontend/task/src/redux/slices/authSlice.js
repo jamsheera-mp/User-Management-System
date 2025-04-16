@@ -1,174 +1,156 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { loginUserApi, registerUserApi, uploadProfilePictureApi, getUserProfileApi, updateUserProfileApi } from "../api/authApi";
-import { storeUserData, getUserFromStorage, updateProfilePictureInStorage, removeUserFromStorage } from "../utils/localStorageUtils";
+//import { loginUserApi, registerUserApi, uploadProfilePictureApi, getUserProfileApi, updateUserProfileApi } from "../api/authApi";
 
-// Async thunk for login
+//import axios from 'axios'
+import axiosInstance from "../utils/axiosConfig";
+
+const API_URL = "http://localhost:5000/api/users";
+// Async thunks
+
 export const loginUser = createAsyncThunk(
   "auth/loginUser",
-  async (userData, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue }) => {
     try {
-      const response = await loginUserApi(userData);
-      // Store user data in localStorage
-      storeUserData({
-        user: response.user,
-        token: response.token,
-      });
-      
-      return response;
+      const response = await axiosInstance.post(`${API_URL}/login`, credentials);
+      return response.data; // { message, user, accessToken, refreshToken }
     } catch (error) {
-      return rejectWithValue(error);
+      return rejectWithValue(error.response?.data?.message || "Login failed");
+    }
+  }
+);
+export const refreshAccessToken = createAsyncThunk(
+  "auth/refreshAccessToken",
+  async (refreshToken, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post(`${API_URL}/refresh-token`, { refreshToken });
+      return response.data; //  { accessToken }
+    } catch (error) {
+      console.error("Refresh token error:", error);
+      return rejectWithValue(error.response?.data?.message || "Refresh failed");
     }
   }
 );
 
-// Async thunk for registration
 export const registerUser = createAsyncThunk(
   "auth/registerUser",
   async (userData, { rejectWithValue }) => {
     try {
-      const response = await registerUserApi(userData);
-      // Save data to localStorage
-      storeUserData(response);
-      return response;
+      const response = await axiosInstance.post(`${API_URL}/register`, userData);
+      console.log("Register user response:", response.data); 
+      return response.data; // { message, user }
     } catch (error) {
-      return rejectWithValue(error);
+      console.error("Register user error:", error);
+      return rejectWithValue(error.response?.data?.message || "Registration failed");
     }
   }
 );
 
-// Async thunk for uploading profile picture
-/*
+
+
 export const uploadProfilePicture = createAsyncThunk(
   "auth/uploadProfilePicture",
   async (formData, { getState, rejectWithValue }) => {
     try {
       const { auth } = getState();
-      const user = auth.user;
-      
-      if (!user) {
-        return rejectWithValue("User not authenticated");
-      }
-      
-      const userId = user.id || user._id;
-      
-      if (!userId) {
-        return rejectWithValue("User ID is missing");
+      const token = auth.accessToken;
+      console.log("Token from state:", token); 
+
+      if (!token) {
+        throw new Error("Authentication token is missing");
       }
 
-      const response = await uploadProfilePictureApi(userId, formData);
-      
-      // Update user data in localStorage with new profile picture
-      updateProfilePictureInStorage(response.imageUrl);
-      
-      return response.imageUrl;
+      const response = await axiosInstance.post(
+        `${API_URL}/upload-profile-picture`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            
+          },
+        }
+      );
+      console.log("Upload response:", response.data);
+
+      // Extract the profile picture URL from the response
+      return (
+        response.data.imageUrl ||
+        response.data.user?.profilePicture ||
+        response.data.profilePicture ||
+        null //  if no URL is found
+      );
     } catch (error) {
-      return rejectWithValue(error);
+      console.error("Error while uploading profile picture:", error);
+      return rejectWithValue(error.response?.data || "Upload failed");
     }
   }
 );
-*/
-export const uploadProfilePicture = createAsyncThunk(
-  "auth/uploadProfilePicture",
-  async (formData, { getState, rejectWithValue }) => {
-    try {
-      const { auth } = getState();
-      const user = auth.user;
-      
-      if (!user) {
-        return rejectWithValue("User not authenticated");
-      }
-      
-      //const userId = user.id || user._id;
-      //console.log("Using userId:", userId);
-      
-      //if (!userId) {
-        //return rejectWithValue("User ID is missing");
-      //}
 
-      //formData.append('userId', userId);
-      
-      const response = await uploadProfilePictureApi( formData);
-      
-      // Make sure this matches your backend response structure
-      if (response && response.imageUrl) {
-         // Update localStorage properly
-  updateProfilePictureInStorage(response.imageUrl);
-        return response.imageUrl;
-      } else if (response && response.user && response.user.profilePicture) {
-         // Update localStorage properly
-  updateProfilePictureInStorage(response.user.profilePicture);
-        return response.user.profilePicture;
-      } else {
-        return rejectWithValue("Invalid response format");
-      }
-    } catch (error) {
-      console.error("Upload error:", error.message);
-      return rejectWithValue(error.toString() || "Upload failed");
-    }
-  }
-);
-// Async thunk for getting user profile
 export const getUserProfile = createAsyncThunk(
   "auth/getUserProfile",
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
     try {
-      const userData = await getUserProfileApi();
-      return userData;
+      const { auth } = getState();
+      const token = auth.accessToken;
+      console.log("Fetching user profile with token:", token); 
+
+      if (!token) {
+        throw new Error("Authentication token is missing");
+      }
+
+      const response = await axiosInstance.get(`${API_URL}/profile`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      console.log("Get user profile response:", response.data); 
+      return response.data.user; //  API returns { user: {...} }
     } catch (error) {
-      return rejectWithValue(error);
+      console.error("Get user profile error:", error);
+      return rejectWithValue(error.response?.data || "Profile fetch failed");
     }
   }
 );
-// Async thunk for updating user profile
+
+
 export const updateUserProfile = createAsyncThunk(
   "auth/updateUserProfile",
-  async (userData, { rejectWithValue }) => {
+  async (userData, { getState, rejectWithValue }) => {
     try {
-      const response = await updateUserProfileApi(userData);
-      
-      // Update user data in localStorage
-      if (response && response.user) {
-        // Use your existing storage utility
-        storeUserData({
-          user: response.user
-        });
-        return response.user;
-      } else {
-        return rejectWithValue("Invalid response format");
+      const { auth } = getState();
+      const token = auth.accessToken;
+      console.log("Token from state:", token); 
+
+      if (!token) {
+        throw new Error("Not authenticated");
       }
+
+      const response = await axiosInstance.put(
+        `${API_URL}/profile`,
+        userData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      console.log("API response:", response.data); 
+      return response.data;
     } catch (error) {
-      console.error("Profile update error:", error);
-      return rejectWithValue(error?.toString() || "Update failed");
+      console.error("API error:", error);
+      return rejectWithValue(error.response?.data || { message: error.message });
     }
   }
 );
 
-// Logout action
-export const logoutUser = createAsyncThunk(
-  "auth/logoutUser", 
-  async () => {
-    removeUserFromStorage();
-    return null;
-  }
-);
-
-// Action to manually update user in store
-export const setUser = createAsyncThunk(
-  "auth/setUser", 
-  async (userData) => {
-    // Update localStorage if needed
-    storeUserData({
-      user: userData
-    });
-    return userData;
-  }
-);
+export const logoutUser = createAsyncThunk("auth/logoutUser", async () => {
+  return null;
+});
 
 const authSlice = createSlice({
   name: "auth",
   initialState: {
-    user: getUserFromStorage(),
-    isAuthenticated: !!getUserFromStorage(),
+    user: null,
+    accessToken: null,
+    refreshToken: localStorage.getItem("refreshToken") || null,
+    isAuthenticated: false,
     isLoading: false,
     error: null,
   },
@@ -176,9 +158,16 @@ const authSlice = createSlice({
     clearAuthError: (state) => {
       state.error = null;
     },
+    logout: (state) => {
+      state.user = null;
+      state.accessToken = null;
+      state.refreshToken = null;
+      state.isAuthenticated = false;
+      localStorage.removeItem("refreshToken");
+    },
   },
   extraReducers: (builder) => {
-    // Login cases
+    // Login
     builder.addCase(loginUser.pending, (state) => {
       state.isLoading = true;
       state.error = null;
@@ -187,16 +176,30 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isAuthenticated = true;
       state.user = action.payload.user;
-      state.error = null;
+      state.accessToken = action.payload.accessToken;
+      state.refreshToken = action.payload.refreshToken;
+      localStorage.setItem("refreshToken", action.payload.refreshToken);
     });
     builder.addCase(loginUser.rejected, (state, action) => {
       state.isLoading = false;
       state.isAuthenticated = false;
       state.user = null;
-      state.error = action.payload;
+      state.error = action.payload?.message;
+    });
+    //refresh token
+    builder.addCase(refreshAccessToken.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.accessToken = action.payload.accessToken;
+      state.isAuthenticated = true;
+      state.error = null;
+    });
+    builder.addCase(refreshAccessToken.rejected, (state) => {
+      state.accessToken = null;
+      state.isAuthenticated = false;
+      localStorage.removeItem("refreshToken");
     });
 
-    // Register cases
+    // Register
     builder.addCase(registerUser.pending, (state) => {
       state.isLoading = true;
       state.error = null;
@@ -205,90 +208,71 @@ const authSlice = createSlice({
       state.isLoading = false;
       state.isAuthenticated = true;
       state.user = action.payload.user;
-      state.error = null;
+      
     });
     builder.addCase(registerUser.rejected, (state, action) => {
       state.isLoading = false;
       state.isAuthenticated = false;
       state.user = null;
-      state.error = action.payload;
+      state.error = action.payload?.message||action.payload;
     });
 
-    // Logout case
+    // Logout
     builder.addCase(logoutUser.fulfilled, (state) => {
+      state.isLoading = false;
       state.isAuthenticated = false;
       state.user = null;
+      state.accessToken = null;
+      state.refreshToken = null;
       state.error = null;
+      localStorage.removeItem("refreshToken")
     });
 
-    // Profile picture upload cases
+    // Upload Profile Picture
     builder.addCase(uploadProfilePicture.pending, (state) => {
       state.isLoading = true;
       state.error = null;
     });
     builder.addCase(uploadProfilePicture.fulfilled, (state, action) => {
       state.isLoading = false;
-      if (state.user) {
-        state.user.profilePicture = action.payload;
-      }
-      //state.profilePicture = action.payload
-      state.error = null;
+      if (state.user) state.user.profilePicture = action.payload;
     });
     builder.addCase(uploadProfilePicture.rejected, (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     });
 
-    // Get User Profile cases
+    // Get User Profile
     builder.addCase(getUserProfile.pending, (state) => {
       state.isLoading = true;
       state.error = null;
     });
     builder.addCase(getUserProfile.fulfilled, (state, action) => {
       state.isLoading = false;
-      // Merge existing user data with new profile data
-      state.user = { 
-        ...state.user, 
-        ...action.payload,
-        // Ensure profilePicture is preserved if it exists in the payload
-        profilePicture: action.payload.profilePicture || state.user?.profilePicture
-      };
-      state.error = null;
+      state.user = { ...state.user, ...action.payload };
     });
     builder.addCase(getUserProfile.rejected, (state, action) => {
       state.isLoading = false;
       state.error = action.payload;
     });
 
-    // Manual user update
-    builder.addCase(setUser.fulfilled, (state, action) => {
-      state.user = action.payload;
-      state.isAuthenticated = !!action.payload;
+    // Update User Profile
+    builder.addCase(updateUserProfile.pending, (state) => {
+      state.isLoading = true;
+      state.error = null;
     });
-
-
-    // User profile update cases
-builder.addCase(updateUserProfile.pending, (state) => {
-  state.isLoading = true;
-  state.error = null;
-});
-builder.addCase(updateUserProfile.fulfilled, (state, action) => {
-  state.isLoading = false;
-  // Update user data in the state, preserving any fields not returned by the API
-  state.user = { 
-    ...state.user, 
-    ...action.payload,
-    // Ensure profilePicture is preserved
-    profilePicture: action.payload.profilePicture || state.user?.profilePicture
-  };
-  state.error = null;
-});
-builder.addCase(updateUserProfile.rejected, (state, action) => {
-  state.isLoading = false;
-  state.error = action.payload;
-});
+    builder.addCase(updateUserProfile.fulfilled, (state, action) => {
+      state.isLoading = false;
+      state.user = action.payload.user;
+      console.log("state user updated to:",state.user);
+      
+    });
+    builder.addCase(updateUserProfile.rejected, (state, action) => {
+      state.isLoading = false;
+      state.error = action.payload;
+    });
   },
 });
 
-export const { clearAuthError } = authSlice.actions;
+export const { clearAuthError, logout } = authSlice.actions;
 export default authSlice.reducer;

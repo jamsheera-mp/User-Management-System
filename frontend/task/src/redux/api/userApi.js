@@ -1,13 +1,13 @@
 import axios from 'axios';
-import { getAuthToken } from '../utils/tokenUtils';
+
 
 // Base API URL for admin endpoints
 const ADMIN_API_URL = "http://localhost:5000/api/admin/users";
 
 // Fetch all users API call
-export const fetchUsersApi = async () => {
+export const fetchUsersApi = async (token) => {
   try {
-    const token = getAuthToken();
+   
     if (!token) throw "Not authenticated";
 
     const response = await axios.get(ADMIN_API_URL, {
@@ -23,13 +23,13 @@ export const fetchUsersApi = async () => {
 };
 
 // Update user API call
-export const updateUserApi = async (userId, updatedData) => {
+export const updateUserApi = async (userId, updatedData,token) => {
   try {
     if (!userId) {
       throw "User Id missing";
     }
     
-    const token = getAuthToken();
+    
     if (!token) throw "Not authenticated";
     
     const response = await axios.put(`${ADMIN_API_URL}/${userId}`, updatedData, {
@@ -45,9 +45,9 @@ export const updateUserApi = async (userId, updatedData) => {
 };
 
 // Delete user API call
-export const deleteUserApi = async (userId) => {
+export const deleteUserApi = async (userId,token) => {
   try {
-    const token = getAuthToken();
+   
     if (!token) throw "Not authenticated";
 
     await axios.delete(`${ADMIN_API_URL}/${userId}`, {
@@ -63,9 +63,9 @@ export const deleteUserApi = async (userId) => {
 };
 
 // Search users API call
-export const searchUsersApi = async (query) => {
+export const searchUsersApi = async (query,token) => {
   try {
-    const token = getAuthToken();
+    
     if (!token) throw "Not authenticated";
     
     const response = await axios.get(`${ADMIN_API_URL}/search?query=${query}`, {
@@ -81,9 +81,9 @@ export const searchUsersApi = async (query) => {
 };
 
 // Get single user detail API call
-export const fetchUserDetailApi = async (userId) => {
+export const fetchUserDetailApi = async (userId,token) => {
   try {
-    const token = getAuthToken();
+   
     if (!token) throw "Not authenticated";
 
     const response = await axios.get(`${ADMIN_API_URL}/${userId}`, {
